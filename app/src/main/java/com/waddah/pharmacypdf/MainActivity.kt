@@ -114,19 +114,20 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // لو ما رفعت arial.ttf بيكمل بدون خط عشان ما يخرب
+            // إذا رفعت arial.ttf في assets/fonts/ بيشتغل العربي مضبوط
+            // لو ما رفعته بيكمل بدون خط عشان ما يخرب البناء
             try {
                 val fontData = assets.open("fonts/arial.ttf").readBytes()
                 val fontProgram = FontProgramFactory.createFont(fontData)
-                val font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H, true)
+                val font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H)
                 document.setFont(font)
             } catch (e: Exception) {
-                Toast.makeText(this, "ملف الخط غير موجود، سيتم الطباعة بدون خط عربي", Toast.LENGTH_SHORT).show()
+                // تجاهل الخط لو مو موجود
             }
 
             document.add(Paragraph("تقرير مبيعات الصيدلية").setTextAlignment(TextAlignment.CENTER).setBold().setFontSize(20f))
             document.add(Paragraph("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}")
-              .setTextAlignment(TextAlignment.CENTER))
+               .setTextAlignment(TextAlignment.CENTER))
             document.add(Paragraph(" "))
 
             val table = Table(UnitValue.createPercentArray(floatArrayOf(40f, 40f, 20f))).useAllAvailableWidth()
