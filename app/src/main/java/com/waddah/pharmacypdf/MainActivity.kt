@@ -3,7 +3,6 @@ package com.waddah.pharmacypdf
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -13,6 +12,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.itextpdf.io.font.FontProgramFactory
 import com.itextpdf.io.font.PdfEncodings
 import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.pdf.PdfDocument
@@ -114,14 +114,19 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // خط عربي - لازم يكون موجود في assets/fonts/arial.ttf
-            // إذا ما عندك خط، احذف السطرين حق Font واشتغل بدونها
-            val font = PdfFontFactory.createFont("assets/fonts/arial.ttf", PdfEncodings.IDENTITY_H, true)
-            document.setFont(font)
+            // لو ما رفعت arial.ttf بيكمل بدون خط عشان ما يخرب
+            try {
+                val fontData = assets.open("fonts/arial.ttf").readBytes()
+                val fontProgram = FontProgramFactory.createFont(fontData)
+                val font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H, true)
+                document.setFont(font)
+            } catch (e: Exception) {
+                Toast.makeText(this, "ملف الخط غير موجود، سيتم الطباعة بدون خط عربي", Toast.LENGTH_SHORT).show()
+            }
 
             document.add(Paragraph("تقرير مبيعات الصيدلية").setTextAlignment(TextAlignment.CENTER).setBold().setFontSize(20f))
             document.add(Paragraph("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}")
-               .setTextAlignment(TextAlignment.CENTER))
+              .setTextAlignment(TextAlignment.CENTER))
             document.add(Paragraph(" "))
 
             val table = Table(UnitValue.createPercentArray(floatArrayOf(40f, 40f, 20f))).useAllAvailableWidth()
@@ -143,7 +148,6 @@ class MainActivity : AppCompatActivity() {
 
             Toast.makeText(this, "تم حفظ PDF في Downloads", Toast.LENGTH_LONG).show()
 
-            // فتح الملف
             val uri = FileProvider.getUriForFile(this, "$packageName.provider", file)
             val intent = Intent(Intent.ACTION_VIEW)
             intent.setDataAndType(uri, "application/pdf")
