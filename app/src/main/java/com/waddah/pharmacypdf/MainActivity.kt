@@ -14,6 +14,7 @@ import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.itextpdf.io.font.FontProgramFactory
 import com.itextpdf.io.font.PdfEncodings
+import com.itextpdf.kernel.font.PdfFont
 import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
@@ -114,63 +115,46 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // === هذا أهم جزء للعربي ===
-            var font: com.itextpdf.kernel.font.PdfFont? = null
+            // تحميل الخط العربي - لازم يكون Arial.ttf موجود في assets/fonts/
+            var font: PdfFont? = null
             try {
-                val fontData = assets.open("fonts/arial.ttf").readBytes()
+                val fontData = assets.open("fonts/Arial.ttf").readBytes()
                 val fontProgram = FontProgramFactory.createFont(fontData)
                 font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H)
-                document.setFont(font)
             } catch (e: Exception) {
-                Toast.makeText(this, "حط ملف arial.ttf في assets/fonts عشان العربي", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "ملف Arial.ttf غير موجود", Toast.LENGTH_LONG).show()
             }
 
-            // العنوان
-            val title = Paragraph("تقرير مبيعات الصيدلية")
-               .setTextAlignment(TextAlignment.CENTER)
-               .setBold().setFontSize(20f)
-            if (font!= null) title.setFont(font)
-            document.add(title)
+            // دالة مساعدة لتطبيق الخط على كل النصوص
+            fun textP(text: String): Paragraph {
+                val p = Paragraph(text).setTextAlignment(TextAlignment.CENTER)
+                if (font!= null) p.setFont(font)
+                return p
+            }
 
-            val dateP = Paragraph("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}")
-               .setTextAlignment(TextAlignment.CENTER)
-            if (font!= null) dateP.setFont(font)
-            document.add(dateP)
-
+            document.add(textP("تقرير مبيعات الصيدلية").setBold().setFontSize(20f))
+            document.add(textP("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}"))
             document.add(Paragraph(" "))
 
-            // الجدول + RTL
-            val table = Table(UnitValue.createPercentArray(floatArrayOf(20f, 40f, 40f))).useAllAvailableWidth()
+            val table = Table(UnitValue.createPercentArray(floatArrayOf(20f, 40f))).useAllAvailableWidth()
 
-            val h1 = Cell().add(Paragraph("السعر").setBold())
-            val h2 = Cell().add(Paragraph("الدواء").setBold())
-            val h3 = Cell().add(Paragraph("اسم العميل").setBold())
-            if (font!= null) {
-                h1.setFont(font); h2.setFont(font); h3.setFont(font)
-            }
-            table.addHeaderCell(h1.setTextAlignment(TextAlignment.CENTER))
-            table.addHeaderCell(h2.setTextAlignment(TextAlignment.CENTER))
-            table.addHeaderCell(h3.setTextAlignment(TextAlignment.CENTER))
+            val h1 = Cell().add(textP("السعر").setBold())
+            val h2 = Cell().add(textP("الدواء").setBold())
+            val h3 = Cell().add(textP("اسم العميل").setBold())
+            table.addHeaderCell(h1).addHeaderCell(h2).addHeaderCell(h3)
 
             var total = 0.0
             for (customer in customers) {
-                val c1 = Cell().add(Paragraph("${customer.price}"))
-                val c2 = Cell().add(Paragraph(customer.medicine))
-                val c3 = Cell().add(Paragraph(customer.name))
-                if (font!= null) {
-                    c1.setFont(font); c2.setFont(font); c3.setFont(font)
-                }
-                table.addCell(c1.setTextAlignment(TextAlignment.CENTER))
-                table.addCell(c2.setTextAlignment(TextAlignment.CENTER))
-                table.addCell(c3.setTextAlignment(TextAlignment.CENTER))
+                table.addCell(Cell().add(textP("${customer.price}")))
+                table.addCell(Cell().add(textP(customer.medicine)))
+                table.addCell(Cell().add(textP(customer.name)))
                 total += customer.price
             }
             document.add(table)
 
             document.add(Paragraph(" "))
-            val totalP = Paragraph("الإجمالي: $total ريال").setBold().setFontSize(16f)
-            if (font!= null) totalP.setFont(font)
-            document.add(totalP.setTextAlignment(TextAlignment.LEFT))
+            val totalP = textP("الإجمالي: $total ريال").setBold().setFontSize(16f).setTextAlignment(TextAlignment.LEFT)
+            document.add(totalP)
 
             document.close()
 
