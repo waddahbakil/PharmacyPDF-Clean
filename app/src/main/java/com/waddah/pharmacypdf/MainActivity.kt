@@ -22,6 +22,7 @@ import com.itextpdf.layout.Document
 import com.itextpdf.layout.element.Cell
 import com.itextpdf.layout.element.Paragraph
 import com.itextpdf.layout.element.Table
+import com.itextpdf.layout.properties.BaseDirection
 import com.itextpdf.layout.properties.TextAlignment
 import com.itextpdf.layout.properties.UnitValue
 import com.waddah.pharmacypdf.databinding.ActivityMainBinding
@@ -115,17 +116,21 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // تحميل الخط العربي - لازم يكون Arial.ttf موجود في assets/fonts/
+            // 1. تحميل الخط العربي
             var font: PdfFont? = null
             try {
                 val fontData = assets.open("fonts/Arial.ttf").readBytes()
                 val fontProgram = FontProgramFactory.createFont(fontData)
                 font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H)
+                document.setFont(font)
             } catch (e: Exception) {
                 Toast.makeText(this, "ملف Arial.ttf غير موجود", Toast.LENGTH_LONG).show()
             }
 
-            // دالة مساعدة لتطبيق الخط على كل النصوص
+            // 2. تفعيل الكتابة من اليمين لليسار للصفحة كلها
+            document.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+
+            // دالة مساعدة للنص
             fun textP(text: String): Paragraph {
                 val p = Paragraph(text).setTextAlignment(TextAlignment.CENTER)
                 if (font!= null) p.setFont(font)
@@ -136,25 +141,27 @@ class MainActivity : AppCompatActivity() {
             document.add(textP("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}"))
             document.add(Paragraph(" "))
 
+            // 3. الجدول لازم نحدد 3 أعمدة ونخليه RTL
             val table = Table(UnitValue.createPercentArray(floatArrayOf(20f, 40f))).useAllAvailableWidth()
+            table.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+            table.setTextAlignment(TextAlignment.RIGHT)
 
-            val h1 = Cell().add(textP("السعر").setBold())
-            val h2 = Cell().add(textP("الدواء").setBold())
-            val h3 = Cell().add(textP("اسم العميل").setBold())
-            table.addHeaderCell(h1).addHeaderCell(h2).addHeaderCell(h3)
+            // ترتيب الأعمدة: اسم العميل - الدواء - السعر عشان RTL
+            table.addHeaderCell(Cell().add(textP("اسم العميل").setBold()))
+            table.addHeaderCell(Cell().add(textP("الدواء").setBold()))
+            table.addHeaderCell(Cell().add(textP("السعر").setBold()))
 
             var total = 0.0
             for (customer in customers) {
-                table.addCell(Cell().add(textP("${customer.price}")))
-                table.addCell(Cell().add(textP(customer.medicine)))
                 table.addCell(Cell().add(textP(customer.name)))
+                table.addCell(Cell().add(textP(customer.medicine)))
+                table.addCell(Cell().add(textP("${customer.price}")))
                 total += customer.price
             }
             document.add(table)
 
             document.add(Paragraph(" "))
-            val totalP = textP("الإجمالي: $total ريال").setBold().setFontSize(16f).setTextAlignment(TextAlignment.LEFT)
-            document.add(totalP)
+            document.add(textP("الإجمالي: $total ريال").setBold().setFontSize(16f).setTextAlignment(TextAlignment.LEFT))
 
             document.close()
 
