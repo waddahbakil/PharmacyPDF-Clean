@@ -45,14 +45,8 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
-    // iText 7 - النسخة المجانية فقط
+    // iText 7 - كافي لحاله. هو يجيب bouncycastle معاه
     implementation("com.itextpdf:itext7-core:7.2.5")
-    implementation("com.itextpdf:kernel:7.2.5")
-    implementation("com.itextpdf:layout:7.2.5")
-    implementation("com.itextpdf:io:7.2.5")
-    
-    // bouncy castle للخطوط العربية
-    implementation("org.bouncycastle:bcprov-jdk18on:1.76")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
