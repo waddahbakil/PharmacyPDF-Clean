@@ -114,37 +114,64 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // إذا رفعت arial.ttf في assets/fonts/ بيشتغل العربي مضبوط
-            // لو ما رفعته بيكمل بدون خط عشان ما يخرب البناء
+            // === هذا أهم جزء للعربي ===
+            var font: com.itextpdf.kernel.font.PdfFont? = null
             try {
                 val fontData = assets.open("fonts/arial.ttf").readBytes()
                 val fontProgram = FontProgramFactory.createFont(fontData)
-                val font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H)
+                font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H)
                 document.setFont(font)
             } catch (e: Exception) {
-                // تجاهل الخط لو مو موجود
+                Toast.makeText(this, "حط ملف arial.ttf في assets/fonts عشان العربي", Toast.LENGTH_LONG).show()
             }
 
-            document.add(Paragraph("تقرير مبيعات الصيدلية").setTextAlignment(TextAlignment.CENTER).setBold().setFontSize(20f))
-            document.add(Paragraph("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}")
-               .setTextAlignment(TextAlignment.CENTER))
+            // العنوان
+            val title = Paragraph("تقرير مبيعات الصيدلية")
+               .setTextAlignment(TextAlignment.CENTER)
+               .setBold().setFontSize(20f)
+            if (font!= null) title.setFont(font)
+            document.add(title)
+
+            val dateP = Paragraph("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}")
+               .setTextAlignment(TextAlignment.CENTER)
+            if (font!= null) dateP.setFont(font)
+            document.add(dateP)
+
             document.add(Paragraph(" "))
 
-            val table = Table(UnitValue.createPercentArray(floatArrayOf(40f, 40f, 20f))).useAllAvailableWidth()
-            table.addHeaderCell(Cell().add(Paragraph("السعر").setBold().setTextAlignment(TextAlignment.CENTER)))
-            table.addHeaderCell(Cell().add(Paragraph("الدواء").setBold().setTextAlignment(TextAlignment.CENTER)))
-            table.addHeaderCell(Cell().add(Paragraph("اسم العميل").setBold().setTextAlignment(TextAlignment.CENTER)))
+            // الجدول + RTL
+            val table = Table(UnitValue.createPercentArray(floatArrayOf(20f, 40f, 40f))).useAllAvailableWidth()
+
+            val h1 = Cell().add(Paragraph("السعر").setBold())
+            val h2 = Cell().add(Paragraph("الدواء").setBold())
+            val h3 = Cell().add(Paragraph("اسم العميل").setBold())
+            if (font!= null) {
+                h1.setFont(font); h2.setFont(font); h3.setFont(font)
+            }
+            table.addHeaderCell(h1.setTextAlignment(TextAlignment.CENTER))
+            table.addHeaderCell(h2.setTextAlignment(TextAlignment.CENTER))
+            table.addHeaderCell(h3.setTextAlignment(TextAlignment.CENTER))
 
             var total = 0.0
             for (customer in customers) {
-                table.addCell(Cell().add(Paragraph("${customer.price}").setTextAlignment(TextAlignment.CENTER)))
-                table.addCell(Cell().add(Paragraph(customer.medicine).setTextAlignment(TextAlignment.CENTER)))
-                table.addCell(Cell().add(Paragraph(customer.name).setTextAlignment(TextAlignment.CENTER)))
+                val c1 = Cell().add(Paragraph("${customer.price}"))
+                val c2 = Cell().add(Paragraph(customer.medicine))
+                val c3 = Cell().add(Paragraph(customer.name))
+                if (font!= null) {
+                    c1.setFont(font); c2.setFont(font); c3.setFont(font)
+                }
+                table.addCell(c1.setTextAlignment(TextAlignment.CENTER))
+                table.addCell(c2.setTextAlignment(TextAlignment.CENTER))
+                table.addCell(c3.setTextAlignment(TextAlignment.CENTER))
                 total += customer.price
             }
             document.add(table)
+
             document.add(Paragraph(" "))
-            document.add(Paragraph("الإجمالي: $total ريال").setBold().setTextAlignment(TextAlignment.LEFT).setFontSize(16f))
+            val totalP = Paragraph("الإجمالي: $total ريال").setBold().setFontSize(16f)
+            if (font!= null) totalP.setFont(font)
+            document.add(totalP.setTextAlignment(TextAlignment.LEFT))
+
             document.close()
 
             Toast.makeText(this, "تم حفظ PDF في Downloads", Toast.LENGTH_LONG).show()
