@@ -116,37 +116,30 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // 1. تحميل الخط العربي
+            // 1. تحميل الخط + تفعيل RTL للصفحة كاملة
             var font: PdfFont? = null
             try {
                 val fontData = assets.open("fonts/Arial.ttf").readBytes()
                 val fontProgram = FontProgramFactory.createFont(fontData)
                 font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H)
                 document.setFont(font)
+                document.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             } catch (e: Exception) {
                 Toast.makeText(this, "ملف Arial.ttf غير موجود", Toast.LENGTH_LONG).show()
             }
 
-            // 2. تفعيل الكتابة من اليمين لليسار للصفحة كلها
-            document.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-
-            // دالة مساعدة للنص
             fun textP(text: String): Paragraph {
-                val p = Paragraph(text).setTextAlignment(TextAlignment.CENTER)
-                if (font!= null) p.setFont(font)
-                return p
+                return Paragraph(text).setFont(font).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             }
 
-            document.add(textP("تقرير مبيعات الصيدلية").setBold().setFontSize(20f))
-            document.add(textP("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}"))
+            document.add(textP("تقرير مبيعات الصيدلية").setBold().setFontSize(20f).setTextAlignment(TextAlignment.CENTER))
+            document.add(textP("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}").setTextAlignment(TextAlignment.CENTER))
             document.add(Paragraph(" "))
 
-            // 3. الجدول لازم نحدد 3 أعمدة ونخليه RTL
-            val table = Table(UnitValue.createPercentArray(floatArrayOf(20f, 40f))).useAllAvailableWidth()
+            // 2. الجدول 3 أعمدة: اسم العميل - الدواء - السعر
+            val table = Table(UnitValue.createPercentArray(floatArrayOf(40f, 40f, 20f))).useAllAvailableWidth()
             table.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-            table.setTextAlignment(TextAlignment.RIGHT)
 
-            // ترتيب الأعمدة: اسم العميل - الدواء - السعر عشان RTL
             table.addHeaderCell(Cell().add(textP("اسم العميل").setBold()))
             table.addHeaderCell(Cell().add(textP("الدواء").setBold()))
             table.addHeaderCell(Cell().add(textP("السعر").setBold()))
