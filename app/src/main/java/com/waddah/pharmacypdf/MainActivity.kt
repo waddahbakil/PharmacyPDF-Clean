@@ -116,29 +116,35 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // 1. تحميل الخط + تفعيل RTL للصفحة كاملة
+            // 1. تحميل الخط العربي + دمجه بالكامل
             var font: PdfFont? = null
             try {
                 val fontData = assets.open("fonts/Arial.ttf").readBytes()
                 val fontProgram = FontProgramFactory.createFont(fontData)
-                font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H)
+                font = PdfFontFactory.createFont(fontProgram, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED)
                 document.setFont(font)
-                document.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             } catch (e: Exception) {
                 Toast.makeText(this, "ملف Arial.ttf غير موجود", Toast.LENGTH_LONG).show()
+                return
             }
 
+            // 2. تفعيل RTL للصفحة كلها - هذا يخلي الحروف تنشبك
+            document.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+
             fun textP(text: String): Paragraph {
-                return Paragraph(text).setFont(font).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+                return Paragraph(text)
+                   .setFont(font)
+                   .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             }
 
             document.add(textP("تقرير مبيعات الصيدلية").setBold().setFontSize(20f).setTextAlignment(TextAlignment.CENTER))
             document.add(textP("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}").setTextAlignment(TextAlignment.CENTER))
             document.add(Paragraph(" "))
 
-            // 2. الجدول 3 أعمدة: اسم العميل - الدواء - السعر
-            val table = Table(UnitValue.createPercentArray(floatArrayOf(40f, 40f, 20f))).useAllAvailableWidth()
+            // 3. الجدول 3 أعمدة: اسم العميل - الدواء - السعر
+            val table = Table(UnitValue.createPercentArray(floatArrayOf(40f, 20f))).useAllAvailableWidth()
             table.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+            table.setTextAlignment(TextAlignment.CENTER)
 
             table.addHeaderCell(Cell().add(textP("اسم العميل").setBold()))
             table.addHeaderCell(Cell().add(textP("الدواء").setBold()))
