@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // 1. تحميل الخط العربي ودمجه كامل
+            // 1. تحميل الخط العربي
             var font: PdfFont? = null
             try {
                 val fontData = assets.open("fonts/Arial.ttf").readBytes()
@@ -128,32 +128,28 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
-            // 2. تفعيل RTL للصفحة - هذا يشبك الحروف
+            // 2. RTL للصفحة كاملة
             document.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
 
             fun textP(text: String): Paragraph {
-                return Paragraph(text)
-                 .setFont(font)
-                 .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+                return Paragraph(text).setFont(font)
             }
 
             document.add(textP("تقرير مبيعات الصيدلية").setBold().setFontSize(20f).setTextAlignment(TextAlignment.CENTER))
             document.add(textP("التاريخ: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}").setTextAlignment(TextAlignment.CENTER))
             document.add(Paragraph(" "))
 
-            // 3. الجدول 3 أعمدة: السعر - الدواء - اسم العميل
-            // نبدأ من اليسار للعربي = السعر أول شي، ثم الدواء، ثم الاسم
-            val table = Table(UnitValue.createPercentArray(floatArrayOf(20f, 40f, 40f))).useAllAvailableWidth()
+            // 3. الجدول 3 أعمدة: اسم العميل - الدواء - السعر
+            val table = Table(UnitValue.createPercentArray(floatArrayOf(40f, 20f))).useAllAvailableWidth()
             table.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
 
-            // ترتيب الهيدر من اليمين لليسار
+            // الهيدر من اليمين لليسار
             table.addHeaderCell(Cell().add(textP("اسم العميل").setBold()).setTextAlignment(TextAlignment.CENTER))
             table.addHeaderCell(Cell().add(textP("الدواء").setBold()).setTextAlignment(TextAlignment.CENTER))
             table.addHeaderCell(Cell().add(textP("السعر").setBold()).setTextAlignment(TextAlignment.CENTER))
 
             var total = 0.0
             for (customer in customers) {
-                // نفس الترتيب: اسم - دواء - سعر
                 table.addCell(Cell().add(textP(customer.name)).setTextAlignment(TextAlignment.CENTER))
                 table.addCell(Cell().add(textP(customer.medicine)).setTextAlignment(TextAlignment.CENTER))
                 table.addCell(Cell().add(textP("${customer.price}")).setTextAlignment(TextAlignment.CENTER))
