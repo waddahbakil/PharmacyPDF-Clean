@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
             val pdfDoc = PdfDocument(writer)
             val document = Document(pdfDoc)
 
-            // 1. تحميل الخط العربي + دمجه بالكامل
+            // 1. تحميل الخط ودمجه بالكامل عشان العربي
             var font: PdfFont? = null
             try {
                 val fontData = assets.open("fonts/Arial.ttf").readBytes()
@@ -128,13 +128,13 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
-            // 2. تفعيل RTL للصفحة كلها - هذا يخلي الحروف تنشبك
+            // 2. تفعيل RTL للصفحة كلها - هذا يشبك الحروف
             document.setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
 
             fun textP(text: String): Paragraph {
                 return Paragraph(text)
-                   .setFont(font)
-                   .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
+                  .setFont(font)
+                  .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
             }
 
             document.add(textP("تقرير مبيعات الصيدلية").setBold().setFontSize(20f).setTextAlignment(TextAlignment.CENTER))
